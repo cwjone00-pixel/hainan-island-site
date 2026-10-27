@@ -137,6 +137,8 @@ export default function Booking() {
       })
       if (!res.ok) throw new Error(`status ${res.status}`)
       setSendState('sent')
+      /* 与全岛游提交后一致：稍作停留让「已发送」可见，然后回到客服聊天页，聊天框里直接看到这条清单 */
+      setTimeout(() => { window.location.href = CHAT_API ? `${CHAT_API}/` : '/' }, 700)
     } catch {
       setSendState('fail')
     }
