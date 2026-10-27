@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../i18n'
 import { useProject, projectName } from '../data/projectStore'
@@ -48,6 +48,16 @@ export default function Booking() {
   const [sendState, setSendState] = useState('idle')   // idle | sending | sent | fail
   const [submitting, setSubmitting] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [terms, setTerms] = useState({ zh: '', en: '', ru: '' })   // 后台配置的预订条款（三语 HTML）
+  const [termsOpen, setTermsOpen] = useState(false)
+
+  /* 预订条款：后台「预订条款」模块保存后，游客端刷新即读到最新内容；没有配置时用内置默认条款 */
+  useEffect(() => {
+    fetch(`${CHAT_API}/api/booking-terms`, { headers: { Accept: 'application/json' } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data && data.terms) setTerms(data.terms) })
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -347,7 +357,21 @@ export default function Booking() {
 
                 <label className="consent">
                   <input type="checkbox" required />
-                  <span>{t('booking.consent')}</span>
+                  <span>
+                    {t('booking.consentPre')}
+                    {lang === 'zh' ? null : ' '}
+                    <button
+                      type="button"
+                      className="consent__terms"
+                      onClick={(event) => {
+                        event.preventDefault()   // 阻止 label 联动勾选
+                        event.stopPropagation()
+                        setTermsOpen(true)
+                      }}
+                    >
+                      {t('booking.consentTerms')}
+                    </button>
+                  </span>
                 </label>
 
                 <div className="form__actions">
@@ -479,6 +503,89 @@ export default function Booking() {
           )}
         </aside>
       </div>
+
+      {/* 预订条款弹窗：内容来自后台「预订条款」模块（三语富文本），已做标签白名单过滤，避免执行脚本 */}
+      {termsOpen ? (
+        <div className="terms-mask" role="dialog" aria-modal="true" onClick={() => setTermsOpen(false)}>
+          <div className="terms-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="terms-modal__head">
+              <h3>{t('booking.termsTitle')}</h3>
+              <button type="button" className="terms-modal__close" aria-label={t('booking.termsClose')} onClick={() => setTermsOpen(false)}>
+                ×
+              </button>
+            </div>
+            <div
+              className="terms-modal__body"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeTerms(terms[lang] || terms.zh || '') || fallbackTerms(lang),
+              }}
+            />
+            <div className="terms-modal__foot">
+              <button type="button" className="btn btn--solid" onClick={() => setTermsOpen(false)}>
+                {t('booking.termsOk')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
+}
+
+/* 只允许排版标签，全部属性剥掉（含 on* 事件），多层非法标签逐轮展开后再删；
+   后台已过滤一次，这里再兜一层，防止旧数据或接口异常时执行脚本 */
+const TERMS_ALLOWED = ['B', 'STRONG', 'I', 'EM', 'U', 'S', 'BR', 'P', 'DIV', 'UL', 'OL', 'LI', 'H3', 'H4']
+function sanitizeTerms(html) {
+  const box = document.createElement('div')
+  box.innerHTML = String(html || '')
+  const scrub = (parent) => {
+    let changed = false
+    Array.from(parent.childNodes).forEach((node) => {
+      if (node.nodeType === 8) {
+        node.remove()
+        changed = true
+        return
+      }
+      if (node.nodeType !== 1) return
+      if (TERMS_ALLOWED.indexOf(node.tagName) < 0) {
+        const frag = document.createDocumentFragment()
+        Array.from(node.childNodes).forEach((child) => frag.appendChild(child))
+        node.replaceWith(frag)
+        changed = true
+        return
+      }
+      Array.from(node.attributes).forEach((attr) => node.removeAttribute(attr.name))
+      scrub(node)
+    })
+    return changed
+  }
+  let guard = 0
+  while (scrub(box) && guard++ < 20) {
+    // 逐轮清理，避免非法标签嵌套遗留
+  }
+  return box.innerHTML
+}
+
+/* 后台没填该语言时的默认条款（与原先硬编码文案保持一致） */
+function fallbackTerms(lang) {
+  const p = (list) => list.map((text) => `<p>${text}</p>`).join('')
+  if (lang === 'en') {
+    return p([
+      'Booking is confirmed only after the deposit is paid and our team confirms availability.',
+      'Free cancellation up to 7 days before the start date; 50% refund within 7 days.',
+      'Please provide accurate passport and contact details for insurance and permits.',
+    ])
+  }
+  if (lang === 'ru') {
+    return p([
+      'Бронирование подтверждается только после оплаты депозита и подтверждения наличия мест.',
+      'Бесплатная отмена не позднее чем за 7 дней до начала; возврат 50% в течение 7 дней.',
+      'Укажите точные паспортные данные и контакты для страхования и разрешений.',
+    ])
+  }
+  return p([
+    '支付定金并经我方确认名额后，预订方才生效。',
+    '出行前 7 天以上可免费取消；7 天以内取消退还 50%。',
+    '请填写真实的护照与联系方式，用于购买保险与办理相关手续。',
+  ])
 }
