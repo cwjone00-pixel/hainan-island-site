@@ -4,15 +4,17 @@ import { useLanguage } from '../i18n'
 import { useProject, projectName } from '../data/projectStore'
 import { formatPrice } from '../utils/format'
 
-// 客服聊天站地址（北所访客站）：点击【确定】后把预订清单写入该站会话
-const CHAT_API = import.meta.env.VITE_CHAT_API || 'https://beisu-visitor.onrender.com'
+// 客服聊天站地址：站内嵌入（/experience）时同源，走相对路径；独立部署时默认写回客服站，也可用 VITE_CHAT_API 覆盖
+const CHAT_API = import.meta.env.VITE_CHAT_API || (import.meta.env.BASE_URL === '/' ? 'https://beisu-visitor.onrender.com' : '')
 
-/* 会话归属：从客服站菜单跳转过来时会带 ?bsid=<会话ID>，存下来供本次及后续预订使用；
-   直接访问官网没带 bsid 时，用本地持久化的访客标识映射成固定会话，避免每次落到不同会话。 */
+/* 会话归属：站内嵌入时同源同标签页，sessionStorage 里的 beisu_sid 就是访客当前会话；
+   独立部署时退化为读取 ?bsid= 或本地持久访客标识。 */
 const SID_KEY = 'bs_sid'
 const VID_KEY = 'bs_vid'
 function readChatSession() {
   try {
+    const same = sessionStorage.getItem('beisu_sid') || ''
+    if (/^[A-Za-z0-9_-]{1,64}$/.test(same)) return same
     const fromUrl = new URLSearchParams(window.location.search).get('bsid')
     if (fromUrl && /^[A-Za-z0-9_-]{1,64}$/.test(fromUrl)) localStorage.setItem(SID_KEY, fromUrl)
     const sid = localStorage.getItem(SID_KEY) || ''
