@@ -219,6 +219,11 @@ export default {
     errorText: 'Submission failed. Please check the server and try again.',
     again: 'Back to edit',
     paxUnit: 'guests',
+    confirm: 'Confirm',
+    baseGroup: 'Basic items',
+    premiumGroup: 'Premium experiences (Hainan)',
+    sent: 'Sent to chat',
+    sendFail: 'Send failed. Please try again later.',
   },
   admin: {
     brandSub: 'Operations',

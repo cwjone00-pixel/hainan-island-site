@@ -1657,6 +1657,31 @@ textarea:focus-visible {
   margin-top: 28px;
 }
 
+/* 成功页按钮组：返回修改 + 确定 并排 */
+.success__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.success__actions .btn {
+  margin-top: 0;
+}
+
+/* 预订摘要分组小标题（基础项目 / 高端体验项目） */
+.summary__group {
+  margin: 20px 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.summary__group:first-of-type {
+  margin-top: 2px;
+}
+
 .success__id {
   display: inline-flex;
   align-items: baseline;

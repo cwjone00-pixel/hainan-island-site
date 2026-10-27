@@ -219,6 +219,11 @@ export default {
     errorText: '提交失败，请检查服务是否启动后重试。',
     again: '返回修改',
     paxUnit: '人',
+    confirm: '确定',
+    baseGroup: '基础项目',
+    premiumGroup: '高端体验项目（海南项目体验）',
+    sent: '已发送到客服对话',
+    sendFail: '发送失败，请稍后重试。',
   },
   admin: {
     brandSub: '运营后台',
