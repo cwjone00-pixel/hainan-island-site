@@ -7,6 +7,33 @@ import { formatPrice } from '../utils/format'
 // 客服聊天站地址（北所访客站）：点击【确定】后把预订清单写入该站会话
 const CHAT_API = import.meta.env.VITE_CHAT_API || 'https://beisu-visitor.onrender.com'
 
+/* 会话归属：从客服站菜单跳转过来时会带 ?bsid=<会话ID>，存下来供本次及后续预订使用；
+   直接访问官网没带 bsid 时，用本地持久化的访客标识映射成固定会话，避免每次落到不同会话。 */
+const SID_KEY = 'bs_sid'
+const VID_KEY = 'bs_vid'
+function readChatSession() {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('bsid')
+    if (fromUrl && /^[A-Za-z0-9_-]{1,64}$/.test(fromUrl)) localStorage.setItem(SID_KEY, fromUrl)
+    const sid = localStorage.getItem(SID_KEY) || ''
+    return /^[A-Za-z0-9_-]{1,64}$/.test(sid) ? sid : ''
+  } catch {
+    return ''
+  }
+}
+function readVisitorKey() {
+  try {
+    let v = localStorage.getItem(VID_KEY)
+    if (!v || !/^[A-Za-z0-9_-]{1,40}$/.test(v)) {
+      v = Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+      localStorage.setItem(VID_KEY, v)
+    }
+    return v
+  } catch {
+    return ''
+  }
+}
+
 export default function Booking() {
   const { t, lang } = useLanguage()
   const [searchParams] = useSearchParams()
@@ -99,7 +126,12 @@ export default function Booking() {
       const res = await fetch(`${CHAT_API}/api/booking/note`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: buildChatText(), bookingId: savedId }),
+        body: JSON.stringify({
+          text: buildChatText(),
+          bookingId: savedId,
+          sessionId: readChatSession(),
+          visitorKey: readVisitorKey(),
+        }),
       })
       if (!res.ok) throw new Error(`status ${res.status}`)
       setSendState('sent')
