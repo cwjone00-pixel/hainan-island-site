@@ -66,6 +66,7 @@ export default function Booking() {
           contact: data.get('contact'),
           date: data.get('date'),
           pax: Number(data.get('pax')),
+          serviceType: data.get('serviceType') || '',
           slug: project?.slug || '',
           projectName: project ? projectName(project, t) : '',
           fromCity: data.get('fromCity'),
@@ -105,6 +106,9 @@ export default function Booking() {
     lines.push(t('booking.baseGroup'))
     push(t('booking.date'), r.date)
     push(t('booking.pax'), r.pax ? `${r.pax} ${t('booking.paxUnit')}` : '')
+    if (r.serviceType) {
+      push(t('booking.serviceType'), r.serviceType === 'private' ? t('booking.servicePrivate') : t('booking.serviceGroup'))
+    }
     push(t('booking.fromCity'), r.fromCity)
     push(t('booking.flightNo'), r.flightNo)
     push(t('booking.arriveTime'), r.arriveTime)
@@ -238,6 +242,21 @@ export default function Booking() {
                       ))}
                     </select>
                   </div>
+                  <div className="field field--full">
+                    <span className="field__label">
+                      {t('booking.serviceType')} <em>{t('booking.required')}</em>
+                    </span>
+                    <div className="radio-cards">
+                      <label className="radio-card">
+                        <input type="radio" name="serviceType" value="group" required />
+                        <span>{t('booking.serviceGroup')}</span>
+                      </label>
+                      <label className="radio-card">
+                        <input type="radio" name="serviceType" value="private" required />
+                        <span>{t('booking.servicePrivate')}</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -367,6 +386,12 @@ export default function Booking() {
                   {record.pax || '—'} {t('booking.paxUnit')}
                 </span>
               </div>
+              {record.serviceType ? (
+                <div className="summary__row">
+                  <span>{t('booking.serviceType')}</span>
+                  <span>{record.serviceType === 'private' ? t('booking.servicePrivate') : t('booking.serviceGroup')}</span>
+                </div>
+              ) : null}
               {record.fromCity ? (
                 <div className="summary__row">
                   <span>{t('booking.fromCity')}</span>

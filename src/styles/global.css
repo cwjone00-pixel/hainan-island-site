@@ -1448,6 +1448,38 @@ textarea:focus-visible {
   opacity: 0.75;
 }
 
+/* 购买方式单选：拼团 / 免拼 两张并排卡片，选中项描边加粗 */
+.radio-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.radio-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 13px 18px;
+  border: 1px solid var(--color-line-strong);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-ink);
+  transition:
+    border-color 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
+}
+
+.radio-card input {
+  accent-color: var(--color-ink);
+  cursor: pointer;
+}
+
+.radio-card:has(input:checked) {
+  border-color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+
 .input,
 .select,
 .textarea {
