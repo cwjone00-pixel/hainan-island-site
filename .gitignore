@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vscode
+
+# 本地上传的图片不进版本库（部署后由服务在运行时自动创建目录）
+server/data/uploads/
+
+# 本地临时脚本 / 截图等调试产物
+_*
+/*.png
