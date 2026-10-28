@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n'
 import { useSettings } from '../data/settingsStore'
 
@@ -64,9 +63,6 @@ export default function SiteFooter() {
 
         <div className="footer__bottom">
           <span>{t('footer.legal')}</span>
-          <Link to="/admin" className="footer__admin">
-            {t('footer.admin')}
-          </Link>
         </div>
       </div>
     </footer>

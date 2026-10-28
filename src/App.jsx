@@ -6,7 +6,6 @@ import Home from './pages/Home'
 import Projects from './pages/Projects'
 import ProjectDetail from './pages/ProjectDetail'
 import Booking from './pages/Booking'
-import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
 function ScrollManager() {
@@ -59,7 +58,6 @@ export default function App() {
             <Route path="/booking" element={<Booking />} />
             <Route path="*" element={<NotFound />} />
           </Route>
-          <Route path="/admin" element={<Admin />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

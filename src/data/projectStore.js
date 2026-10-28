@@ -8,11 +8,10 @@ const EVENT = 'hainan:projects'
    后台保存后所有游客看到的都是同一份；独立部署时该接口不存在，自动退回本地存储 */
 const REMOTE_API = '/api/exp/projects'
 
-const TONES = ['a', 'b', 'c', 'd']
-
 let remoteOverrides = {}
 
-/* 把后台配置覆盖到项目上：价格/定金是数字，名称与简介等文字留空则不覆盖，继续用默认三语文案 */
+/* 把后台配置覆盖到项目上：价格/定金是数字，名称与简介等文字留空则不覆盖，继续用默认三语文案；
+   页面内容（概览/亮点）与图集由后台「海南项目体验 · 项目页面内容」维护，保存后游客端刷新即生效 */
 function applyOverrides(list, overrides) {
   if (!overrides || !Object.keys(overrides).length) return list
   return list.map((project) => {
@@ -27,6 +26,13 @@ function applyOverrides(list, overrides) {
       if (o[key]) meta[key] = o[key]
     })
     if (Object.keys(meta).length) next.meta = meta
+    if (o.content && typeof o.content === 'object') {
+      next.content = {
+        overview: Array.isArray(o.content.overview) ? o.content.overview : [],
+        highlights: Array.isArray(o.content.highlights) ? o.content.highlights : [],
+      }
+    }
+    if (Array.isArray(o.gallery)) next.gallery = o.gallery
     return next
   })
 }
@@ -72,59 +78,6 @@ function load() {
     list = defaults()
   }
   return applyOverrides(list, remoteOverrides)
-}
-
-export function saveProjects(list) {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-  } catch {
-    // 本地存储不可用时仅保留页面状态
-  }
-  window.dispatchEvent(new Event(EVENT))
-  saveProjectsRemote(list)
-}
-
-/* 后台保存同步到服务端（站内嵌入时生效）：只提交后台填过的值，清空的字段不再覆盖 */
-function saveProjectsRemote(list) {
-  const projects = {}
-  list.forEach((project) => {
-    const item = {}
-    if (typeof project.price === 'number') item.price = project.price
-    if (typeof project.deposit === 'number') item.deposit = project.deposit
-    if (project.name && project.name.trim()) item.name = project.name.trim()
-    ;['intro', 'duration', 'group', 'level', 'from'].forEach((key) => {
-      const value = project.meta && project.meta[key]
-      if (value && String(value).trim()) item[key] = String(value).trim()
-    })
-    if (Object.keys(item).length) projects[project.slug] = item
-  })
-  fetch(REMOTE_API, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ projects }),
-  })
-    .then((res) => (res.ok ? res.json() : null))
-    .then((data) => {
-      if (!data || !data.ok) return
-      remoteOverrides = data.projects || {}
-      window.dispatchEvent(new Event(EVENT))
-    })
-    .catch(() => {})
-}
-
-export function createProject(list) {
-  const used = new Set(list.map((project) => project.slug))
-  let index = 1
-  while (used.has(`custom-${index}`)) index += 1
-
-  return {
-    slug: `custom-${index}`,
-    key: null,
-    name: '',
-    price: 0,
-    deposit: 0,
-    tone: TONES[list.length % TONES.length],
-  }
 }
 
 export function projectCopy(project, t) {
